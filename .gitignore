@@ -1,0 +1,10 @@
+# Datos: la app procesa el CSV localmente en el navegador,
+# no debe subirse ningún CSV al repo (evita exponer PII).
+*.csv
+
+# OS / editor
+Thumbs.db
+.DS_Store
+*.log
+.vscode/
+.claude/
