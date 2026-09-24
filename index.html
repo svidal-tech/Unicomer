@@ -484,6 +484,15 @@ function classify(r){
   const success = C.success && truthy(r[C.success]);
   const contactType = C.contactType ? norm(r[C.contactType]) : "";
   const hangup = C.hangup ? String(r[C.hangup]||"").toUpperCase() : "";
+  const voicemail = C.voicemail && truthy(r[C.voicemail]);
+  // Answered=false SOLO cuenta cuando la columna existe y trae valor explícito falso;
+  // celdas vacías no deben degradar la clasificación.
+  const answeredExplicitlyFalse =
+      C.answered && String(r[C.answered]||"").trim()!=="" && !truthy(r[C.answered]);
+
+  // Buzón de voz o llamada no contestada => siempre No contacto, aunque otras
+  // columnas (Success, contactability_type) digan lo contrario.
+  if(voicemail || answeredExplicitlyFalse || hangup==="VOICEMAIL") return "nocontacto";
 
   if(success) return "efectivo";
   if(contactType==="contactedyes" && !success) return "directo";
@@ -635,6 +644,7 @@ function render(){
     summary:    col(FIELDS,"rpt_summary"),
     campaign:   col(FIELDS,"CampaignName","campana"),
     voicemail:  col(FIELDS,"voicemail","buzon"),
+    answered:   col(FIELDS,"Answered","answered","contestada","contestado"),
     sessionId:  col(FIELDS,"session_id","sessionid"),
     contactId:  col(FIELDS,"ContactID","contact_id")
   };

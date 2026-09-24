@@ -121,6 +121,7 @@ Las columnas se detectan por nombre mediante la función `col()` (normaliza a mi
 | `rpt_summary` | `C.summary` | Resumen de la llamada |
 | `CampaignName` | `C.campaign` | Nombre de campaña |
 | `voicemail` | `C.voicemail` | Booleano de buzón de voz |
+| `Answered` | `C.answered` | Booleano de si la llamada fue contestada |
 | `session_id` / `ContactID` | `C.sessionId` / `C.contactId` | SID de la llamada |
 
 ## Reglas de clasificación
@@ -129,13 +130,19 @@ Definidas en `classify(row)` (≈línea 483). Se evalúan **en orden**; la prime
 
 ```js
 function classify(r){
+  // Regla dura: buzón de voz o llamada no contestada => siempre No contacto,
+  // aunque otras columnas (Success, contactability_type) digan lo contrario.
+  if (voicemail === true
+      || Answered === false           // solo si la columna trae valor explícito
+      || HangUPCause === "VOICEMAIL")                 return "nocontacto";
+
   if (Success === true)                              return "efectivo";
   if (contactability_type === "contacted_yes"
       && Success === false)                          return "directo";
   if (contactability_type === "contact_family")       return "indirecto";
   if (HangUPCause === "PENDING_EXECUTION")            return "singestion";
   /* cualquier otro caso: EXPIRED_EXECUTION, NO_ANSWER,
-     VOICEMAIL, SENT_TO_CHANNEL, etc. */               return "nocontacto";
+     SENT_TO_CHANNEL, etc. */                          return "nocontacto";
 }
 ```
 
@@ -233,6 +240,7 @@ Navegadores modernos con soporte de ES6+ (`const`/`let`, arrow functions, templa
 | v3.10 | Traducción de causas de finalización (`HangUPCause`) a español |
 | v3.11 | "Sin contacto" renombrado a "No contacto" |
 | v3.12 | Fix: "Sin gestión" limitado a `PENDING_EXECUTION`; `EXPIRED_EXECUTION` reclasificado a "No contacto" |
+| v3.13 | Fix: `voicemail=true`, `Answered=false` o `HangUPCause=VOICEMAIL` fuerzan "No contacto" por encima de cualquier otra clasificación |
 
 ---
 
